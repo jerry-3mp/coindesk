@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  h2-database:
+    volumes:
+      - h2-data:/opt/h2-data
+
+volumes:
+  h2-data:
