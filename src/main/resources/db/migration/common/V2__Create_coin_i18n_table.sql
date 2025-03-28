@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS coin_i18n (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (coin_id) REFERENCES coins(id),
-    UNIQUE KEY unique_coin_lang (coin_id, lang_code)
+    CONSTRAINT unique_coin_lang UNIQUE (coin_id, lang_code)
 );
 
 COMMENT ON TABLE coin_i18n IS 'Table to store internationalized coin names';

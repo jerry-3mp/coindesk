@@ -7,6 +7,12 @@
 docker-compose up -d
 ```
 
+### Accessing H2 Console
+- URL: http://localhost:81
+- JDBC URL: jdbc:h2:tcp://localhost:1521/coindesk
+- User: sa
+- Password: (leave blank)
+
 ### Starting Database with Persistent Storage
 ```bash
 docker-compose -f docker-compose.yml -f docker-compose.h2.volume.yml up -d

@@ -1,12 +1,10 @@
-version: '3.8'
-
 services:
   h2-database:
     image: oscarfonts/h2
     container_name: coindesk-h2
     ports:
-      - "8082:8082"  # H2 Console port
-      - "9092:9092"  # TCP port for database connection
+      - "81:81"     # H2 Console port (actual port used by container)
+      - "1521:1521"  # TCP port for database connection (actual port used by container)
     environment:
       - H2_OPTIONS=-ifNotExists
       - JAVA_OPTS=-Dh2.bindAddress=0.0.0.0
