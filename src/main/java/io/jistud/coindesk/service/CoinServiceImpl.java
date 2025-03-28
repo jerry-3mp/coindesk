@@ -25,7 +25,23 @@ public class CoinServiceImpl implements CoinService {
     @Override
     @Transactional
     public Coin createCoin(String name, Map<String, String> i18nNames) {
-        // This method will be implemented after writing tests
-        throw new UnsupportedOperationException("Method not yet implemented");
+        // Business rule validation: check for uniqueness
+        if (coinRepository.existsByName(name)) {
+            throw new IllegalStateException("Coin with name '" + name + "' already exists");
+        }
+
+        // Create and save the coin
+        Coin coin = new Coin(name);
+        coin = coinRepository.save(coin);
+
+        // Add i18n names if provided
+        if (i18nNames != null && !i18nNames.isEmpty()) {
+            for (Map.Entry<String, String> entry : i18nNames.entrySet()) {
+                CoinI18n i18n = new CoinI18n(coin, entry.getKey(), entry.getValue());
+                coinI18nRepository.save(i18n);
+            }
+        }
+
+        return coin;
     }
 }
