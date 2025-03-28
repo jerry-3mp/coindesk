@@ -1,0 +1,39 @@
+@startuml CoinDesk ER Diagram
+
+!define TABLE(name,desc) class name as "desc" << (T,#FFAAAA) >>
+!define PRIMARY_KEY(x) <b><color:#b8861b><&key></color> x</b>
+!define FOREIGN_KEY(x) <color:#aaaaaa><&key></color> x
+!define COLUMN(x) <color:#efefef><&media-record></color> x
+
+' Tables
+TABLE(coins, "coins") {
+  PRIMARY_KEY(id): BIGINT
+  COLUMN(name): VARCHAR(255)
+  COLUMN(created_at): TIMESTAMP
+  COLUMN(updated_at): TIMESTAMP
+}
+
+TABLE(coin_i18n, "coin_i18n") {
+  PRIMARY_KEY(id): BIGINT
+  FOREIGN_KEY(coin_id): BIGINT
+  COLUMN(lang_code): VARCHAR(10)
+  COLUMN(name): VARCHAR(255)
+  COLUMN(created_at): TIMESTAMP
+  COLUMN(updated_at): TIMESTAMP
+}
+
+' Relationships
+coins "1" --{ "many" coin_i18n : "has translations"
+
+note bottom of coins
+  Stores basic coin information
+  with a unique name
+end note
+
+note bottom of coin_i18n
+  Stores localized names for coins
+  in different languages
+  Unique constraint on (coin_id, lang_code)
+end note
+
+@enduml

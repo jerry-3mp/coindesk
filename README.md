@@ -36,6 +36,8 @@ Flyway migrations are organized in profile-specific directories:
 Current migrations:
 - `common/V1__Create_coins_table.sql` - Creates the initial coins table (all environments)
 - `local/V1_1__Insert_sample_coins.sql` - Adds sample coin data (local only)
+- `common/V2__Create_coin_i18n_table.sql` - Creates the i18n names table (all environments)
+- `local/V2_1__Insert_sample_coin_i18n.sql` - Adds sample i18n data (local only)
 
 ### Adding New Migrations
 Place migrations in the appropriate directory:
@@ -48,3 +50,12 @@ src/main/resources/db/migration/local/V3__Add_local_data.sql       # For local o
 - Local development (with sample data): `./mvnw spring-boot:run -Dspring-boot.run.profiles=local`
 - Testing (no sample data): `./mvnw spring-boot:run -Dspring-boot.run.profiles=test`
 - Production (no sample data): `./mvnw spring-boot:run -Dspring-boot.run.profiles=prod`
+
+## Database Schema
+
+An Entity-Relationship diagram is available in the `diagrams` folder. The diagram is created using PlantUML and shows the relationship between the tables in the database.
+
+- `coins` - Stores basic coin information
+- `coin_i18n` - Stores internationalized names for coins
+
+For more details and a visual representation, see the [Diagrams](./diagrams/README.md).
