@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface CoinRepository extends JpaRepository<Coin, Long> {
     Optional<Coin> findByName(String name);
     List<Coin> findByNameContainingIgnoreCase(String partialName);
+    boolean existsByName(String name);
 }

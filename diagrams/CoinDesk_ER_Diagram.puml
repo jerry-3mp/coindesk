@@ -8,7 +8,7 @@
 ' Tables
 TABLE(coins, "coins") {
   PRIMARY_KEY(id): BIGINT
-  COLUMN(name): VARCHAR(255)
+  COLUMN(name): VARCHAR(255) <<unique>>
   COLUMN(created_at): TIMESTAMP
   COLUMN(updated_at): TIMESTAMP
 }

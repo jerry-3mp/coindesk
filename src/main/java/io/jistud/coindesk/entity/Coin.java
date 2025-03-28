@@ -6,7 +6,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "coins")
+@Table(name = "coins", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_coins_name", columnNames = {"name"})
+})
 public class Coin {
 
     @Id
