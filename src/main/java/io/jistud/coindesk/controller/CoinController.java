@@ -13,6 +13,7 @@ import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -276,6 +277,47 @@ public class CoinController {
       throw e;
     } catch (IllegalStateException e) {
       // Handle duplicate name exception (409 Conflict)
+      throw e;
+    }
+  }
+  
+  /**
+   * Delete a coin by ID
+   *
+   * @param id ID of the coin to delete
+   * @return Empty response with 204 No Content status
+   */
+  @Operation(
+      summary = "Delete a coin",
+      description = "Delete a coin and all its associated internationalized names by ID")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "204",
+            description = "Coin deleted successfully"),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Coin not found",
+            content =
+                @Content(
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = ErrorResponse.class)))
+      })
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> deleteCoin(
+      @Parameter(description = "Coin ID", required = true) @PathVariable Long id) {
+
+    Optional<Coin> coinOpt = coinService.findById(id);
+    if (!coinOpt.isPresent()) {
+      return ResponseEntity.notFound().build();
+    }
+
+    try {
+      // Delete the coin and its i18n names
+      coinService.deleteCoin(id);
+      return ResponseEntity.noContent().build();
+    } catch (IllegalArgumentException e) {
+      // Handle not found exception (404 Not Found)
       throw e;
     }
   }

@@ -27,7 +27,9 @@ import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -496,6 +498,38 @@ public class CoinControllerTest {
                 .content(requestBody))
         .andExpect(status().isConflict())
         .andExpect(jsonPath("$.message", containsString("already exists")));
+  }
+  
+  @Test
+  @DisplayName("Should delete coin successfully")
+  void shouldDeleteCoinSuccessfully() throws Exception {
+    // Arrange
+    Long coinId = 1L;
+    Coin coin = createCoin(coinId, "Bitcoin");
+    
+    when(coinService.findById(coinId)).thenReturn(Optional.of(coin));
+    doNothing().when(coinService).deleteCoin(coinId);
+    
+    // Act & Assert
+    mockMvc
+        .perform(delete("/api/v1/coins/{id}", coinId))
+        .andExpect(status().isNoContent());
+  }
+  
+  @Test
+  @DisplayName("Should return 404 when deleting non-existent coin")
+  void shouldReturn404WhenDeletingNonExistentCoin() throws Exception {
+    // Arrange
+    Long nonExistentId = 999L;
+    
+    when(coinService.findById(nonExistentId)).thenReturn(Optional.empty());
+    doThrow(new IllegalArgumentException("Coin with ID " + nonExistentId + " not found"))
+        .when(coinService).deleteCoin(nonExistentId);
+    
+    // Act & Assert
+    mockMvc
+        .perform(delete("/api/v1/coins/{id}", nonExistentId))
+        .andExpect(status().isNotFound());
   }
 
   // Helper method to create coin objects for testing
