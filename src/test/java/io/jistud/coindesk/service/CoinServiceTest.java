@@ -217,6 +217,7 @@ public class CoinServiceTest {
     updatedCoin.setId(coinId);
 
     when(coinRepository.findById(coinId)).thenReturn(Optional.of(existingCoin));
+    when(coinRepository.findByName(newName)).thenReturn(Optional.empty());
     when(coinRepository.save(any(Coin.class))).thenReturn(updatedCoin);
 
     // Act
@@ -226,6 +227,7 @@ public class CoinServiceTest {
     assertNotNull(result);
     assertEquals(newName, result.getName());
     verify(coinRepository).findById(coinId);
+    verify(coinRepository).findByName(newName);
     verify(coinRepository).save(any(Coin.class));
     verify(coinI18nRepository, never()).save(any(CoinI18n.class));
   }
@@ -246,6 +248,8 @@ public class CoinServiceTest {
     List<CoinI18n> existingI18ns = new ArrayList<>(); // Empty list, no existing i18ns
 
     when(coinRepository.findById(coinId)).thenReturn(Optional.of(existingCoin));
+    when(coinRepository.findByName(coinName))
+        .thenReturn(Optional.of(existingCoin)); // Same coin, should be allowed
     when(coinRepository.save(any(Coin.class))).thenReturn(existingCoin);
     when(coinI18nRepository.findByCoinId(coinId)).thenReturn(existingI18ns);
 
@@ -256,6 +260,7 @@ public class CoinServiceTest {
     assertNotNull(result);
     assertEquals(coinName, result.getName());
     verify(coinRepository).findById(coinId);
+    verify(coinRepository).findByName(coinName);
     verify(coinRepository).save(any(Coin.class));
 
     // Verify i18n entries were saved
@@ -300,6 +305,8 @@ public class CoinServiceTest {
     List<CoinI18n> existingI18ns = Arrays.asList(existingZhTw, existingJa, existingFr);
 
     when(coinRepository.findById(coinId)).thenReturn(Optional.of(existingCoin));
+    when(coinRepository.findByName(coinName))
+        .thenReturn(Optional.of(existingCoin)); // Same coin, should be allowed
     when(coinRepository.save(any(Coin.class))).thenReturn(existingCoin);
     when(coinI18nRepository.findByCoinId(coinId)).thenReturn(existingI18ns);
 
@@ -310,6 +317,7 @@ public class CoinServiceTest {
     assertNotNull(result);
     assertEquals(coinName, result.getName());
     verify(coinRepository).findById(coinId);
+    verify(coinRepository).findByName(coinName);
     verify(coinRepository).save(any(Coin.class));
 
     // Verify i18n entries were updated (only zh-TW and ja)
@@ -364,6 +372,73 @@ public class CoinServiceTest {
     verify(coinRepository).findById(coinId);
     verify(coinRepository, never()).save(any(Coin.class));
     verify(coinI18nRepository, never()).save(any(CoinI18n.class));
+  }
+
+  @Test
+  @DisplayName(
+      "Should throw exception when updating coin with a name that exists for a different coin")
+  void shouldThrowExceptionWhenUpdatingCoinWithExistingNameForDifferentCoin() {
+    // Arrange
+    Long coinId = 1L;
+    Long differentCoinId = 2L;
+    String existingName = "Bitcoin";
+    String newName = "Ethereum"; // Trying to use a name that already exists for a different coin
+
+    Coin existingCoin = new Coin(existingName);
+    existingCoin.setId(coinId);
+
+    Coin differentCoin = new Coin(newName);
+    differentCoin.setId(differentCoinId);
+
+    when(coinRepository.findById(coinId)).thenReturn(Optional.of(existingCoin));
+    when(coinRepository.findByName(newName))
+        .thenReturn(Optional.of(differentCoin)); // Different coin with this name exists
+
+    // Act & Assert
+    Exception exception =
+        assertThrows(
+            IllegalStateException.class,
+            () -> {
+              coinService.updateCoin(coinId, newName, null);
+            });
+
+    assertEquals(
+        "Coin with name '" + newName + "' already exists for a different coin",
+        exception.getMessage());
+    verify(coinRepository).findById(coinId);
+    verify(coinRepository).findByName(newName);
+    verify(coinRepository, never()).save(any(Coin.class));
+  }
+
+  @Test
+  @DisplayName("Should allow updating a coin while keeping the same name")
+  void shouldAllowUpdatingCoinWithSameName() {
+    // Arrange
+    Long coinId = 1L;
+    String sameName = "Bitcoin";
+    Map<String, String> i18nNames = new HashMap<>();
+    i18nNames.put("zh-TW", "比特幣-新版");
+
+    Coin existingCoin = new Coin(sameName);
+    existingCoin.setId(coinId);
+
+    List<CoinI18n> existingI18ns = new ArrayList<>();
+
+    when(coinRepository.findById(coinId)).thenReturn(Optional.of(existingCoin));
+    when(coinRepository.findByName(sameName))
+        .thenReturn(Optional.of(existingCoin)); // Same coin, same name
+    when(coinRepository.save(any(Coin.class))).thenReturn(existingCoin);
+    when(coinI18nRepository.findByCoinId(coinId)).thenReturn(existingI18ns);
+
+    // Act
+    Coin result = coinService.updateCoin(coinId, sameName, i18nNames);
+
+    // Assert
+    assertNotNull(result);
+    assertEquals(sameName, result.getName());
+    verify(coinRepository).findById(coinId);
+    verify(coinRepository).findByName(sameName);
+    verify(coinRepository).save(any(Coin.class));
   }
 
   @Test
