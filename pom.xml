@@ -28,7 +28,9 @@
     </scm>
     <properties>
         <java.version>8</java.version>
+        <spotless.version>2.44.3</spotless.version>
     </properties>
+    
     <dependencies>
         <!-- Spring Boot Dependencies -->
         <dependency>
@@ -45,13 +47,6 @@
             <optional>true</optional>
         </dependency>
         
-        <!-- OpenAPI/Swagger Dependencies -->
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-ui</artifactId>
-            <version>1.6.9</version>
-        </dependency>
-        
         <!-- Database Dependencies -->
         <dependency>
             <groupId>org.flywaydb</groupId>
@@ -61,6 +56,13 @@
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
+        </dependency>
+        
+        <!-- API Documentation -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-ui</artifactId>
+            <version>1.6.9</version>
         </dependency>
         
         <!-- Test Dependencies -->
@@ -96,6 +98,42 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <!-- Spotless Plugin Configuration for Code Formatting -->
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>${spotless.version}</version>
+                <configuration>
+                    <java>
+                        <!-- Use Google's Java Format as the formatter -->
+                        <googleJavaFormat>
+                            <version>1.7</version>
+                            <style>GOOGLE</style>
+                        </googleJavaFormat>
+                        <!-- Define which files to include in formatting -->
+                        <includes>
+                            <include>src/main/java/**/*.java</include>
+                            <include>src/test/java/**/*.java</include>
+                        </includes>
+                        <!-- Import order configuration -->
+                        <importOrder>
+                            <order>java,javax,org,com,io,,\#</order>
+                        </importOrder>
+                        <!-- Remove unused imports -->
+                        <removeUnusedImports/>
+                    </java>
+                </configuration>
+                <executions>
+                    <!-- Check formatting during validation phase -->
+                    <execution>
+                        <id>spotless-check</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
