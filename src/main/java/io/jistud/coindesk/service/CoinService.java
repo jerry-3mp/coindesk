@@ -2,7 +2,9 @@ package io.jistud.coindesk.service;
 
 import io.jistud.coindesk.entity.Coin;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public interface CoinService {
     
@@ -14,4 +16,27 @@ public interface CoinService {
      * @return The created Coin entity with its generated ID
      */
     Coin createCoin(String name, Map<String, String> i18nNames);
+    
+    /**
+     * Finds a coin by its ID
+     * 
+     * @param id The coin ID
+     * @return Optional containing the coin if found, empty otherwise
+     */
+    Optional<Coin> findById(Long id);
+    
+    /**
+     * Finds a coin by its name
+     *
+     * @param name The coin name
+     * @return Optional containing the coin if found, empty otherwise
+     */
+    Optional<Coin> findByName(String name);
+    
+    /**
+     * Lists all coins
+     * 
+     * @return List of all coins
+     */
+    List<Coin> findAll();
 }

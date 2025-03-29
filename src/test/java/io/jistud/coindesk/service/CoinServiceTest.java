@@ -13,8 +13,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -111,6 +110,7 @@ public class CoinServiceTest {
         assertTrue(jaFound, "Japanese translation should be saved");
     }
 
+    // We'll keep the unique name validation test as it's a business rule validation
     @Test
     @DisplayName("Should throw exception when coin name already exists")
     void shouldThrowExceptionWhenCoinNameAlreadyExists() {
@@ -125,5 +125,84 @@ public class CoinServiceTest {
 
         verify(coinRepository).existsByName(existingName);
         verify(coinRepository, never()).save(any(Coin.class));
+    }
+
+    @Test
+    @DisplayName("Should find coin by ID")
+    void shouldFindCoinById() {
+        // Arrange
+        Long coinId = 1L;
+        Coin coin = new Coin("Bitcoin");
+        coin.setId(coinId);
+
+        when(coinRepository.findById(coinId)).thenReturn(Optional.of(coin));
+
+        // Act
+        Optional<Coin> result = coinService.findById(coinId);
+
+        // Assert
+        assertTrue(result.isPresent());
+        assertEquals(coinId, result.get().getId());
+        assertEquals("Bitcoin", result.get().getName());
+        verify(coinRepository).findById(coinId);
+    }
+
+    @Test
+    @DisplayName("Should return empty optional when coin ID not found")
+    void shouldReturnEmptyOptionalWhenCoinIdNotFound() {
+        // Arrange
+        Long nonExistentId = 999L;
+        when(coinRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+
+        // Act
+        Optional<Coin> result = coinService.findById(nonExistentId);
+
+        // Assert
+        assertFalse(result.isPresent());
+        verify(coinRepository).findById(nonExistentId);
+    }
+
+    @Test
+    @DisplayName("Should find coin by name")
+    void shouldFindCoinByName() {
+        // Arrange
+        String coinName = "Bitcoin";
+        Coin coin = new Coin(coinName);
+        coin.setId(1L);
+
+        when(coinRepository.findByName(coinName)).thenReturn(Optional.of(coin));
+
+        // Act
+        Optional<Coin> result = coinService.findByName(coinName);
+
+        // Assert
+        assertTrue(result.isPresent());
+        assertEquals(1L, result.get().getId());
+        assertEquals(coinName, result.get().getName());
+        verify(coinRepository).findByName(coinName);
+    }
+
+    @Test
+    @DisplayName("Should find all coins")
+    void shouldFindAllCoins() {
+        // Arrange
+        List<Coin> coins = Arrays.asList(
+                new Coin("Bitcoin"),
+                new Coin("Ethereum"),
+                new Coin("Litecoin")
+        );
+
+        when(coinRepository.findAll()).thenReturn(coins);
+
+        // Act
+        List<Coin> result = coinService.findAll();
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(3, result.size());
+        assertEquals("Bitcoin", result.get(0).getName());
+        assertEquals("Ethereum", result.get(1).getName());
+        assertEquals("Litecoin", result.get(2).getName());
+        verify(coinRepository).findAll();
     }
 }

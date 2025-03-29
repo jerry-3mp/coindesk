@@ -8,7 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class CoinServiceImpl implements CoinService {
@@ -43,5 +45,20 @@ public class CoinServiceImpl implements CoinService {
         }
 
         return coin;
+    }
+
+    @Override
+    public Optional<Coin> findById(Long id) {
+        throw new UnsupportedOperationException("Method not yet implemented");
+    }
+
+    @Override
+    public Optional<Coin> findByName(String name) {
+        throw new UnsupportedOperationException("Method not yet implemented");
+    }
+
+    @Override
+    public List<Coin> findAll() {
+        throw new UnsupportedOperationException("Method not yet implemented");
     }
 }
