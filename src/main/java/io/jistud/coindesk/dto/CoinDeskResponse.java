@@ -2,6 +2,8 @@ package io.jistud.coindesk.dto;
 
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /** DTO for parsing external CoinDesk API response */
 public class CoinDeskResponse {
   private TimeInfo time;
@@ -76,7 +78,9 @@ public class CoinDeskResponse {
     private String symbol;
     private String rate;
     private String description;
-    private Double rate_float;
+
+    @JsonProperty("rate_float")
+    private Double rateFloat;
 
     public String getCode() {
       return code;
@@ -111,11 +115,11 @@ public class CoinDeskResponse {
     }
 
     public Double getRateFloat() {
-      return rate_float;
+      return rateFloat;
     }
 
-    public void setRateFloat(Double rate_float) {
-      this.rate_float = rate_float;
+    public void setRateFloat(Double rateFloat) {
+      this.rateFloat = rateFloat;
     }
   }
 }
