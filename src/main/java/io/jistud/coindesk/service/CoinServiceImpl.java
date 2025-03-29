@@ -112,6 +112,14 @@ public class CoinServiceImpl implements CoinService {
     @Override
     @Transactional
     public void deleteCoin(Long id) {
-        throw new UnsupportedOperationException("Method not implemented yet");
+        // Find the coin by ID
+        Coin coin = coinRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Coin with ID " + id + " not found"));
+        
+        // Delete associated i18n entries first
+        coinI18nRepository.deleteByCoinId(id);
+        
+        // Delete the coin
+        coinRepository.delete(coin);
     }
 }
