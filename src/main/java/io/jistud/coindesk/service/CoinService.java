@@ -51,4 +51,12 @@ public interface CoinService {
      * @throws IllegalArgumentException if the coin does not exist
      */
     Coin updateCoin(Long id, String name, Map<String, String> i18nNames);
+    
+    /**
+     * Deletes a coin and all associated i18n entries by its ID
+     * 
+     * @param id The ID of the coin to delete
+     * @throws IllegalArgumentException if the coin does not exist
+     */
+    void deleteCoin(Long id);
 }

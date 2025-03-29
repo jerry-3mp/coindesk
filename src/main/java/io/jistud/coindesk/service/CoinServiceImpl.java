@@ -108,4 +108,10 @@ public class CoinServiceImpl implements CoinService {
         
         return coin;
     }
+    
+    @Override
+    @Transactional
+    public void deleteCoin(Long id) {
+        throw new UnsupportedOperationException("Method not implemented yet");
+    }
 }

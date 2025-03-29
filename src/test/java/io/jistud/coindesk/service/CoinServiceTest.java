@@ -364,4 +364,43 @@ public class CoinServiceTest {
         verify(coinRepository, never()).save(any(Coin.class));
         verify(coinI18nRepository, never()).save(any(CoinI18n.class));
     }
+
+    @Test
+    @DisplayName("Should delete a coin and its i18n entries")
+    void shouldDeleteCoinAndI18nEntries() {
+        // Arrange
+        Long coinId = 1L;
+        Coin coin = new Coin("Bitcoin");
+        coin.setId(coinId);
+        
+        when(coinRepository.findById(coinId)).thenReturn(Optional.of(coin));
+        doNothing().when(coinI18nRepository).deleteByCoinId(coinId);
+        doNothing().when(coinRepository).delete(coin);
+        
+        // Act
+        coinService.deleteCoin(coinId);
+        
+        // Assert
+        verify(coinRepository).findById(coinId);
+        verify(coinI18nRepository).deleteByCoinId(coinId);
+        verify(coinRepository).delete(coin);
+    }
+    
+    @Test
+    @DisplayName("Should throw exception when deleting non-existent coin")
+    void shouldThrowExceptionWhenDeletingNonExistentCoin() {
+        // Arrange
+        Long nonExistentId = 999L;
+        when(coinRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+        
+        // Act & Assert
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            coinService.deleteCoin(nonExistentId);
+        });
+        
+        assertEquals("Coin with ID " + nonExistentId + " not found", exception.getMessage());
+        verify(coinRepository).findById(nonExistentId);
+        verify(coinI18nRepository, never()).deleteByCoinId(anyLong());
+        verify(coinRepository, never()).delete(any(Coin.class));
+    }
 }
