@@ -1,10 +1,18 @@
 package io.jistud.coindesk.controller;
 
-import io.jistud.coindesk.dto.CoinResponse;
 import io.jistud.coindesk.dto.CoinSummaryDto;
+import io.jistud.coindesk.dto.ErrorResponse;
 import io.jistud.coindesk.entity.Coin;
 import io.jistud.coindesk.service.CoinService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +26,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/coins")
+@Tag(name = "Coin Management", description = "APIs for managing cryptocurrency coin information")
 public class CoinController {
     
     private final CoinService coinService;
@@ -33,15 +42,22 @@ public class CoinController {
      * @param id Optional ID to filter by
      * @param name Optional name to filter by
      * @return List of coins matching criteria
+     * @throws IllegalArgumentException if both id and name parameters are provided
      */
+    @Operation(summary = "Get coins", description = "Retrieve all coins or filter by ID or name")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "400", description = "Invalid request parameters",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+            schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping
-    public ResponseEntity<?> getCoins(
-            @RequestParam(required = false) Long id,
-            @RequestParam(required = false) String name) {
+    public ResponseEntity<List<CoinSummaryDto>> getCoins(
+            @Parameter(description = "Coin ID to filter by") @RequestParam(required = false) Long id,
+            @Parameter(description = "Coin name to filter by") @RequestParam(required = false) String name) {
         
         // Check if both id and name parameters are provided
         if (id != null && name != null) {
-            return ResponseEntity.badRequest().body("Cannot filter by both id and name simultaneously");
+            throw new IllegalArgumentException("Cannot filter by both id and name simultaneously");
         }
         
         List<Coin> coins = new ArrayList<>();
