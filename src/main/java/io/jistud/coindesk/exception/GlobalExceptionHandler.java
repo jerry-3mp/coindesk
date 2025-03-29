@@ -29,6 +29,19 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   }
 
   /**
+   * Handle IllegalStateException. This is used for duplicate resource errors.
+   *
+   * @param ex The exception
+   * @return Error response with 409 Conflict status
+   */
+  @ExceptionHandler(IllegalStateException.class)
+  @ResponseStatus(HttpStatus.CONFLICT)
+  public ResponseEntity<ErrorResponse> handleIllegalStateException(IllegalStateException ex) {
+    ErrorResponse errorResponse = new ErrorResponse(HttpStatus.CONFLICT.value(), ex.getMessage());
+    return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+  }
+
+  /**
    * Fallback handler for any unhandled exceptions.
    *
    * @param ex The exception

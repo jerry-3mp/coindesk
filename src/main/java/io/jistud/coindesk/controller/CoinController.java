@@ -1,5 +1,6 @@
 package io.jistud.coindesk.controller;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -7,15 +8,21 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import javax.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import io.jistud.coindesk.dto.CoinCreateRequest;
 import io.jistud.coindesk.dto.CoinResponse;
 import io.jistud.coindesk.dto.CoinSummaryDto;
 import io.jistud.coindesk.dto.ErrorResponse;
@@ -39,6 +46,69 @@ public class CoinController {
   @Autowired
   public CoinController(CoinService coinService) {
     this.coinService = coinService;
+  }
+
+  /**
+   * Create a new coin
+   *
+   * @param request Request body containing coin details
+   * @return Created coin information
+   */
+  @Operation(
+      summary = "Create a new coin",
+      description = "Create a new coin with optional internationalized names")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "201",
+            description = "Coin created successfully",
+            content =
+                @Content(
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = CoinResponse.class))),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Invalid request parameters",
+            content =
+                @Content(
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Coin with same name already exists",
+            content =
+                @Content(
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = ErrorResponse.class)))
+      })
+  @PostMapping
+  public ResponseEntity<CoinResponse> createCoin(
+      @Parameter(description = "Coin details", required = true) @Valid @RequestBody
+          CoinCreateRequest request) {
+
+    // Validate coin name is not empty
+    if (request.getName() == null || request.getName().trim().isEmpty()) {
+      throw new IllegalArgumentException("Coin name cannot be empty");
+    }
+
+    try {
+      // Create the coin with optional i18n names
+      Coin coin = coinService.createCoin(request.getName(), request.getI18nNames());
+      CoinResponse response = convertToResponse(coin);
+
+      // Create the URI for the new resource
+      URI location =
+          ServletUriComponentsBuilder.fromCurrentRequest()
+              .path("/{id}")
+              .buildAndExpand(coin.getId())
+              .toUri();
+
+      // Return 201 Created with the location header and response body
+      return ResponseEntity.created(location).body(response);
+    } catch (IllegalStateException e) {
+      // Handle duplicate name exception (409 Conflict)
+      throw e;
+    }
   }
 
   /**
