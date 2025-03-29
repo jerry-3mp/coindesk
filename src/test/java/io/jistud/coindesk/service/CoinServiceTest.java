@@ -205,4 +205,154 @@ public class CoinServiceTest {
         assertEquals("Litecoin", result.get(2).getName());
         verify(coinRepository).findAll();
     }
+
+    @Test
+    @DisplayName("Should update a coin name successfully")
+    void shouldUpdateCoinNameSuccessfully() {
+        // Arrange
+        Long coinId = 1L;
+        String oldName = "Bitcoin";
+        String newName = "Bitcoin Updated";
+        
+        Coin existingCoin = new Coin(oldName);
+        existingCoin.setId(coinId);
+        
+        Coin updatedCoin = new Coin(newName);
+        updatedCoin.setId(coinId);
+        
+        when(coinRepository.findById(coinId)).thenReturn(Optional.of(existingCoin));
+        when(coinRepository.save(any(Coin.class))).thenReturn(updatedCoin);
+        
+        // Act
+        Coin result = coinService.updateCoin(coinId, newName, null);
+        
+        // Assert
+        assertNotNull(result);
+        assertEquals(newName, result.getName());
+        verify(coinRepository).findById(coinId);
+        verify(coinRepository).save(any(Coin.class));
+        verify(coinI18nRepository, never()).save(any(CoinI18n.class));
+    }
+
+    @Test
+    @DisplayName("Should update coin with i18n names")
+    void shouldUpdateCoinWithI18nNames() {
+        // Arrange
+        Long coinId = 1L;
+        String coinName = "Bitcoin";
+        Map<String, String> i18nNames = new HashMap<>();
+        i18nNames.put("zh-TW", "比特幣");
+        i18nNames.put("ja", "ビットコイン");
+        
+        Coin existingCoin = new Coin(coinName);
+        existingCoin.setId(coinId);
+        
+        List<CoinI18n> existingI18ns = new ArrayList<>(); // Empty list, no existing i18ns
+        
+        when(coinRepository.findById(coinId)).thenReturn(Optional.of(existingCoin));
+        when(coinRepository.save(any(Coin.class))).thenReturn(existingCoin);
+        when(coinI18nRepository.findByCoinId(coinId)).thenReturn(existingI18ns);
+        
+        // Act
+        Coin result = coinService.updateCoin(coinId, coinName, i18nNames);
+        
+        // Assert
+        assertNotNull(result);
+        assertEquals(coinName, result.getName());
+        verify(coinRepository).findById(coinId);
+        verify(coinRepository).save(any(Coin.class));
+        
+        // Verify i18n entries were saved
+        verify(coinI18nRepository, times(2)).save(coinI18nCaptor.capture());
+        
+        // Check that the captured values contain both language entries
+        boolean zhTwFound = false;
+        boolean jaFound = false;
+        
+        for (CoinI18n i18n : coinI18nCaptor.getAllValues()) {
+            if ("zh-TW".equals(i18n.getLangCode()) && "比特幣".equals(i18n.getName())) {
+                zhTwFound = true;
+            } else if ("ja".equals(i18n.getLangCode()) && "ビットコイン".equals(i18n.getName())) {
+                jaFound = true;
+            }
+            assertEquals(existingCoin, i18n.getCoin());
+        }
+        
+        assertTrue(zhTwFound, "Traditional Chinese translation should be saved");
+        assertTrue(jaFound, "Japanese translation should be saved");
+    }
+
+    @Test
+    @DisplayName("Should update existing i18n names for coin")
+    void shouldUpdateExistingI18nNames() {
+        // Arrange
+        Long coinId = 1L;
+        String coinName = "Bitcoin";
+        
+        // Updated i18n names
+        Map<String, String> updatedI18nNames = new HashMap<>();
+        updatedI18nNames.put("zh-TW", "比特幣-更新");
+        updatedI18nNames.put("ja", "ビットコイン-更新");
+        
+        Coin existingCoin = new Coin(coinName);
+        existingCoin.setId(coinId);
+        
+        // Existing i18n entries
+        CoinI18n existingZhTw = new CoinI18n(existingCoin, "zh-TW", "比特幣");
+        CoinI18n existingJa = new CoinI18n(existingCoin, "ja", "ビットコイン");
+        List<CoinI18n> existingI18ns = Arrays.asList(existingZhTw, existingJa);
+        
+        when(coinRepository.findById(coinId)).thenReturn(Optional.of(existingCoin));
+        when(coinRepository.save(any(Coin.class))).thenReturn(existingCoin);
+        when(coinI18nRepository.findByCoinId(coinId)).thenReturn(existingI18ns);
+        
+        // Act
+        Coin result = coinService.updateCoin(coinId, coinName, updatedI18nNames);
+        
+        // Assert
+        assertNotNull(result);
+        assertEquals(coinName, result.getName());
+        verify(coinRepository).findById(coinId);
+        verify(coinRepository).save(any(Coin.class));
+        
+        // Verify i18n entries were updated
+        verify(coinI18nRepository, times(2)).save(coinI18nCaptor.capture());
+        
+        // Check that the captured values contain updated language entries
+        boolean zhTwUpdated = false;
+        boolean jaUpdated = false;
+        
+        for (CoinI18n i18n : coinI18nCaptor.getAllValues()) {
+            if ("zh-TW".equals(i18n.getLangCode()) && "比特幣-更新".equals(i18n.getName())) {
+                zhTwUpdated = true;
+            } else if ("ja".equals(i18n.getLangCode()) && "ビットコイン-更新".equals(i18n.getName())) {
+                jaUpdated = true;
+            }
+        }
+        
+        assertTrue(zhTwUpdated, "Traditional Chinese translation should be updated");
+        assertTrue(jaUpdated, "Japanese translation should be updated");
+    }
+
+    @Test
+    @DisplayName("Should throw exception when updating non-existent coin with i18n names")
+    void shouldThrowExceptionWhenUpdatingNonExistentCoinWithI18nNames() {
+        // Arrange
+        Long coinId = 1L;
+        String newName = "Bitcoin Updated";
+        Map<String, String> i18nNames = new HashMap<>();
+        i18nNames.put("zh-TW", "比特幣");
+        
+        when(coinRepository.findById(coinId)).thenReturn(Optional.empty());
+        
+        // Act & Assert
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            coinService.updateCoin(coinId, newName, i18nNames);
+        });
+        
+        assertEquals("Coin with ID " + coinId + " not found", exception.getMessage());
+        verify(coinRepository).findById(coinId);
+        verify(coinRepository, never()).save(any(Coin.class));
+        verify(coinI18nRepository, never()).save(any(CoinI18n.class));
+    }
 }

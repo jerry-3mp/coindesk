@@ -61,4 +61,10 @@ public class CoinServiceImpl implements CoinService {
     public List<Coin> findAll() {
         return coinRepository.findAll();
     }
+
+    @Override
+    @Transactional
+    public Coin updateCoin(Long id, String name, Map<String, String> i18nNames) {
+        throw new UnsupportedOperationException("Method not yet implemented");
+    }
 }

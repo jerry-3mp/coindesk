@@ -39,4 +39,15 @@ public interface CoinService {
      * @return List of all coins
      */
     List<Coin> findAll();
+    
+    /**
+     * Updates an existing coin by its ID with optional internationalized names
+     * 
+     * @param id The ID of the coin to update
+     * @param name The updated name of the coin
+     * @param i18nNames Map of language codes to localized names (can be null or empty)
+     * @return The updated coin
+     * @throws IllegalArgumentException if the coin does not exist
+     */
+    Coin updateCoin(Long id, String name, Map<String, String> i18nNames);
 }
