@@ -3,9 +3,7 @@ package io.jistud.coindesk.controller;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +14,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import io.jistud.coindesk.dto.CoinResponse;
 import io.jistud.coindesk.entity.Coin;
 import io.jistud.coindesk.entity.CoinI18n;
 import io.jistud.coindesk.service.CoinService;
@@ -26,8 +23,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -88,11 +85,6 @@ public class CoinControllerTest {
     createdCoin.addI18nName(i18nEn);
     createdCoin.addI18nName(i18nEs);
     createdCoin.addI18nName(i18nJa);
-
-    Map<String, String> i18nMap = new HashMap<>();
-    i18nMap.put("en", "Bitcoin");
-    i18nMap.put("es", "Bitcóin");
-    i18nMap.put("ja", "ビットコイン");
 
     when(coinService.createCoin(eq(coinName), anyMap())).thenReturn(createdCoin);
 
@@ -274,12 +266,6 @@ public class CoinControllerTest {
     coin.setCreatedAt(now);
     coin.setUpdatedAt(now);
 
-    CoinResponse expectedResponse = new CoinResponse();
-    expectedResponse.setId(coinId);
-    expectedResponse.setName(coinName);
-    expectedResponse.setCreatedAt(now);
-    expectedResponse.setUpdatedAt(now);
-
     when(coinService.findById(coinId)).thenReturn(Optional.of(coin));
 
     // Act & Assert
@@ -313,18 +299,6 @@ public class CoinControllerTest {
     coin.addI18nName(i18nEn);
     coin.addI18nName(i18nEs);
     coin.addI18nName(i18nJa);
-
-    CoinResponse expectedResponse = new CoinResponse();
-    expectedResponse.setId(coinId);
-    expectedResponse.setName(coinName);
-    expectedResponse.setCreatedAt(now);
-    expectedResponse.setUpdatedAt(now);
-
-    Map<String, String> i18nNames = new HashMap<>();
-    i18nNames.put("en", "Bitcoin");
-    i18nNames.put("es", "Bitcóin");
-    i18nNames.put("ja", "ビットコイン");
-    expectedResponse.setI18nNames(i18nNames);
 
     when(coinService.findById(coinId)).thenReturn(Optional.of(coin));
 
@@ -413,11 +387,6 @@ public class CoinControllerTest {
     updatedCoin.addI18nName(i18nEs);
     updatedCoin.addI18nName(i18nJa);
 
-    Map<String, String> i18nMap = new HashMap<>();
-    i18nMap.put("en", "Bitcoin");
-    i18nMap.put("es", "Bitcóin");
-    i18nMap.put("ja", "ビットコイン");
-
     when(coinService.findById(coinId)).thenReturn(Optional.of(existingCoin));
     when(coinService.updateCoin(eq(coinId), eq(updatedName), anyMap())).thenReturn(updatedCoin);
 
@@ -499,37 +468,34 @@ public class CoinControllerTest {
         .andExpect(status().isConflict())
         .andExpect(jsonPath("$.message", containsString("already exists")));
   }
-  
+
   @Test
   @DisplayName("Should delete coin successfully")
   void shouldDeleteCoinSuccessfully() throws Exception {
     // Arrange
     Long coinId = 1L;
     Coin coin = createCoin(coinId, "Bitcoin");
-    
+
     when(coinService.findById(coinId)).thenReturn(Optional.of(coin));
     doNothing().when(coinService).deleteCoin(coinId);
-    
+
     // Act & Assert
-    mockMvc
-        .perform(delete("/api/v1/coins/{id}", coinId))
-        .andExpect(status().isNoContent());
+    mockMvc.perform(delete("/api/v1/coins/{id}", coinId)).andExpect(status().isNoContent());
   }
-  
+
   @Test
   @DisplayName("Should return 404 when deleting non-existent coin")
   void shouldReturn404WhenDeletingNonExistentCoin() throws Exception {
     // Arrange
     Long nonExistentId = 999L;
-    
+
     when(coinService.findById(nonExistentId)).thenReturn(Optional.empty());
     doThrow(new IllegalArgumentException("Coin with ID " + nonExistentId + " not found"))
-        .when(coinService).deleteCoin(nonExistentId);
-    
+        .when(coinService)
+        .deleteCoin(nonExistentId);
+
     // Act & Assert
-    mockMvc
-        .perform(delete("/api/v1/coins/{id}", nonExistentId))
-        .andExpect(status().isNotFound());
+    mockMvc.perform(delete("/api/v1/coins/{id}", nonExistentId)).andExpect(status().isNotFound());
   }
 
   // Helper method to create coin objects for testing

@@ -280,7 +280,7 @@ public class CoinController {
       throw e;
     }
   }
-  
+
   /**
    * Delete a coin by ID
    *
@@ -292,9 +292,7 @@ public class CoinController {
       description = "Delete a coin and all its associated internationalized names by ID")
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "204",
-            description = "Coin deleted successfully"),
+        @ApiResponse(responseCode = "204", description = "Coin deleted successfully"),
         @ApiResponse(
             responseCode = "404",
             description = "Coin not found",
