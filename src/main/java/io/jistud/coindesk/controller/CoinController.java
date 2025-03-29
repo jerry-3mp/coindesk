@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -25,6 +26,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import io.jistud.coindesk.dto.CoinCreateRequest;
 import io.jistud.coindesk.dto.CoinResponse;
 import io.jistud.coindesk.dto.CoinSummaryDto;
+import io.jistud.coindesk.dto.CoinUpdateRequest;
 import io.jistud.coindesk.dto.ErrorResponse;
 import io.jistud.coindesk.entity.Coin;
 import io.jistud.coindesk.service.CoinService;
@@ -204,6 +206,78 @@ public class CoinController {
     CoinResponse response = convertToResponse(coin);
 
     return ResponseEntity.ok(response);
+  }
+
+  /**
+   * Update an existing coin
+   *
+   * @param id ID of the coin to update
+   * @param request Request body containing updated coin details
+   * @return Updated coin information
+   */
+  @Operation(
+      summary = "Update a coin",
+      description = "Update an existing coin with new name and optional internationalized names")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Coin updated successfully",
+            content =
+                @Content(
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = CoinResponse.class))),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Invalid request parameters",
+            content =
+                @Content(
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Coin not found",
+            content =
+                @Content(
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Coin with same name already exists",
+            content =
+                @Content(
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = ErrorResponse.class)))
+      })
+  @PutMapping("/{id}")
+  public ResponseEntity<CoinResponse> updateCoin(
+      @Parameter(description = "Coin ID", required = true) @PathVariable Long id,
+      @Parameter(description = "Updated coin details", required = true) @Valid @RequestBody
+          CoinUpdateRequest request) {
+
+    // Validate coin name is not empty
+    if (request.getName() == null || request.getName().trim().isEmpty()) {
+      throw new IllegalArgumentException("Coin name cannot be empty");
+    }
+
+    Optional<Coin> coinOpt = coinService.findById(id);
+    if (!coinOpt.isPresent()) {
+      return ResponseEntity.notFound().build();
+    }
+
+    try {
+      // Update the coin with optional i18n names
+      Coin coin = coinService.updateCoin(id, request.getName(), request.getI18nNames());
+      CoinResponse response = convertToResponse(coin);
+
+      return ResponseEntity.ok(response);
+    } catch (IllegalArgumentException e) {
+      // Handle not found exception (404 Not Found)
+      throw e;
+    } catch (IllegalStateException e) {
+      // Handle duplicate name exception (409 Conflict)
+      throw e;
+    }
   }
 
   /**

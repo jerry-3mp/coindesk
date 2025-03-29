@@ -24,11 +24,13 @@ import io.jistud.coindesk.service.CoinService;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(CoinController.class)
@@ -349,6 +351,151 @@ public class CoinControllerTest {
     mockMvc
         .perform(get("/api/v1/coins/{id}", nonExistentId).contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isNotFound());
+  }
+
+  @Test
+  @DisplayName("Should update a coin successfully")
+  void shouldUpdateCoinSuccessfully() throws Exception {
+    // Arrange
+    Long coinId = 1L;
+    String originalName = "Bitcoin";
+    String updatedName = "BTC";
+    String requestBody = "{\"name\":\"" + updatedName + "\"}";
+
+    Coin existingCoin = createCoin(coinId, originalName);
+    Coin updatedCoin = createCoin(coinId, updatedName);
+    LocalDateTime now = LocalDateTime.now();
+    updatedCoin.setCreatedAt(now);
+    updatedCoin.setUpdatedAt(now);
+
+    when(coinService.findById(coinId)).thenReturn(Optional.of(existingCoin));
+    when(coinService.updateCoin(eq(coinId), eq(updatedName), any())).thenReturn(updatedCoin);
+
+    // Act & Assert
+    mockMvc
+        .perform(
+            put("/api/v1/coins/{id}", coinId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id", is(coinId.intValue())))
+        .andExpect(jsonPath("$.name", is(updatedName)))
+        .andExpect(jsonPath("$.createdAt").exists())
+        .andExpect(jsonPath("$.updatedAt").exists());
+  }
+
+  @Test
+  @DisplayName("Should update a coin with i18n names")
+  void shouldUpdateCoinWithI18nNames() throws Exception {
+    // Arrange
+    Long coinId = 1L;
+    String originalName = "Bitcoin";
+    String updatedName = "BTC";
+    String requestBody =
+        "{\"name\":\""
+            + updatedName
+            + "\",\"i18nNames\":{\"en\":\"Bitcoin\",\"es\":\"Bitcóin\",\"ja\":\"ビットコイン\"}}";
+
+    Coin existingCoin = createCoin(coinId, originalName);
+    Coin updatedCoin = createCoin(coinId, updatedName);
+    LocalDateTime now = LocalDateTime.now();
+    updatedCoin.setCreatedAt(now);
+    updatedCoin.setUpdatedAt(now);
+
+    // Add i18n names to the updated coin
+    CoinI18n i18nEn = new CoinI18n(updatedCoin, "en", "Bitcoin");
+    CoinI18n i18nEs = new CoinI18n(updatedCoin, "es", "Bitcóin");
+    CoinI18n i18nJa = new CoinI18n(updatedCoin, "ja", "ビットコイン");
+
+    updatedCoin.addI18nName(i18nEn);
+    updatedCoin.addI18nName(i18nEs);
+    updatedCoin.addI18nName(i18nJa);
+
+    Map<String, String> i18nMap = new HashMap<>();
+    i18nMap.put("en", "Bitcoin");
+    i18nMap.put("es", "Bitcóin");
+    i18nMap.put("ja", "ビットコイン");
+
+    when(coinService.findById(coinId)).thenReturn(Optional.of(existingCoin));
+    when(coinService.updateCoin(eq(coinId), eq(updatedName), anyMap())).thenReturn(updatedCoin);
+
+    // Act & Assert
+    mockMvc
+        .perform(
+            put("/api/v1/coins/{id}", coinId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id", is(coinId.intValue())))
+        .andExpect(jsonPath("$.name", is(updatedName)))
+        .andExpect(jsonPath("$.i18nNames", notNullValue()))
+        .andExpect(jsonPath("$.i18nNames.en", is("Bitcoin")))
+        .andExpect(jsonPath("$.i18nNames.es", is("Bitcóin")))
+        .andExpect(jsonPath("$.i18nNames.ja", is("ビットコイン")));
+  }
+
+  @Test
+  @DisplayName("Should return 400 when updating coin with empty name")
+  void shouldReturn400WhenUpdatingCoinWithEmptyName() throws Exception {
+    // Arrange
+    Long coinId = 1L;
+    String requestBody = "{\"name\":\"\"}";
+
+    // Act & Assert
+    mockMvc
+        .perform(
+            put("/api/v1/coins/{id}", coinId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @DisplayName("Should return 404 when updating non-existent coin")
+  void shouldReturn404WhenUpdatingNonExistentCoin() throws Exception {
+    // Arrange
+    Long nonExistentId = 999L;
+    String requestBody = "{\"name\":\"BTC\"}";
+
+    when(coinService.updateCoin(eq(nonExistentId), anyString(), any()))
+        .thenThrow(new IllegalArgumentException("Coin with ID " + nonExistentId + " not found"));
+
+    // Act & Assert
+    mockMvc
+        .perform(
+            put("/api/v1/coins/{id}", nonExistentId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  @DisplayName("Should return 409 when updating coin with duplicate name")
+  void shouldReturn409WhenUpdatingCoinWithDuplicateName() throws Exception {
+    // Arrange
+    Long coinId = 1L;
+    String coinName = "Bitcoin";
+    String duplicateName = "Ethereum";
+    String requestBody = "{\"name\":\"" + duplicateName + "\"}";
+
+    Coin coin = createCoin(1L, coinName);
+    LocalDateTime now = LocalDateTime.now();
+    coin.setCreatedAt(now);
+    coin.setUpdatedAt(now);
+
+    when(coinService.findById(coinId)).thenReturn(Optional.of(coin));
+    when(coinService.updateCoin(eq(coinId), eq(duplicateName), any()))
+        .thenThrow(
+            new IllegalStateException("Coin with name '" + duplicateName + "' already exists"));
+
+    // Act & Assert
+    mockMvc
+        .perform(
+            put("/api/v1/coins/{id}", coinId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.message", containsString("already exists")));
   }
 
   // Helper method to create coin objects for testing

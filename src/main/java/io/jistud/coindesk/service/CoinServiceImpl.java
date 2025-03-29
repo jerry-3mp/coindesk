@@ -69,6 +69,11 @@ public class CoinServiceImpl implements CoinService {
   @Override
   @Transactional
   public Coin updateCoin(Long id, String name, Map<String, String> i18nNames) {
+    // Business rule validation: check for uniqueness
+    if (coinRepository.existsByName(name)) {
+      throw new IllegalStateException("Coin with name '" + name + "' already exists");
+    }
+
     // Find the coin by ID
     Coin coin =
         coinRepository
