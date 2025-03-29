@@ -42,11 +42,13 @@ public class CoinServiceImpl implements CoinService {
     if (i18nNames != null && !i18nNames.isEmpty()) {
       for (Map.Entry<String, String> entry : i18nNames.entrySet()) {
         CoinI18n i18n = new CoinI18n(coin, entry.getKey(), entry.getValue());
+        coin.addI18nName(i18n); // Add to the coin's collection
         coinI18nRepository.save(i18n);
       }
     }
 
-    return coin;
+    // Refresh the coin to ensure all collections are properly loaded
+    return coinRepository.findById(coin.getId()).orElse(coin);
   }
 
   @Override
