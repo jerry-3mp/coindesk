@@ -110,11 +110,11 @@ public class CoinDeskResponse {
       this.description = description;
     }
 
-    public Double getRate_float() {
+    public Double getRateFloat() {
       return rate_float;
     }
 
-    public void setRate_float(Double rate_float) {
+    public void setRateFloat(Double rate_float) {
       this.rate_float = rate_float;
     }
   }
