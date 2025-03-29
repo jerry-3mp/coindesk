@@ -283,13 +283,13 @@ public class CoinServiceTest {
     }
 
     @Test
-    @DisplayName("Should update existing i18n names for coin")
+    @DisplayName("Should update existing i18n names for coin and preserve non-updated entries")
     void shouldUpdateExistingI18nNames() {
         // Arrange
         Long coinId = 1L;
         String coinName = "Bitcoin";
         
-        // Updated i18n names
+        // Updated i18n names - only updating zh-TW and ja, not fr
         Map<String, String> updatedI18nNames = new HashMap<>();
         updatedI18nNames.put("zh-TW", "比特幣-更新");
         updatedI18nNames.put("ja", "ビットコイン-更新");
@@ -297,10 +297,11 @@ public class CoinServiceTest {
         Coin existingCoin = new Coin(coinName);
         existingCoin.setId(coinId);
         
-        // Existing i18n entries
+        // Existing i18n entries - includes three languages
         CoinI18n existingZhTw = new CoinI18n(existingCoin, "zh-TW", "比特幣");
         CoinI18n existingJa = new CoinI18n(existingCoin, "ja", "ビットコイン");
-        List<CoinI18n> existingI18ns = Arrays.asList(existingZhTw, existingJa);
+        CoinI18n existingFr = new CoinI18n(existingCoin, "fr", "Bitcoin");
+        List<CoinI18n> existingI18ns = Arrays.asList(existingZhTw, existingJa, existingFr);
         
         when(coinRepository.findById(coinId)).thenReturn(Optional.of(existingCoin));
         when(coinRepository.save(any(Coin.class))).thenReturn(existingCoin);
@@ -315,23 +316,31 @@ public class CoinServiceTest {
         verify(coinRepository).findById(coinId);
         verify(coinRepository).save(any(Coin.class));
         
-        // Verify i18n entries were updated
+        // Verify i18n entries were updated (only zh-TW and ja)
         verify(coinI18nRepository, times(2)).save(coinI18nCaptor.capture());
         
         // Check that the captured values contain updated language entries
         boolean zhTwUpdated = false;
         boolean jaUpdated = false;
+        boolean frInCaptor = false;
         
         for (CoinI18n i18n : coinI18nCaptor.getAllValues()) {
             if ("zh-TW".equals(i18n.getLangCode()) && "比特幣-更新".equals(i18n.getName())) {
                 zhTwUpdated = true;
             } else if ("ja".equals(i18n.getLangCode()) && "ビットコイン-更新".equals(i18n.getName())) {
                 jaUpdated = true;
+            } else if ("fr".equals(i18n.getLangCode())) {
+                frInCaptor = true;
             }
         }
         
         assertTrue(zhTwUpdated, "Traditional Chinese translation should be updated");
         assertTrue(jaUpdated, "Japanese translation should be updated");
+        assertFalse(frInCaptor, "French translation should not be in the captor as it was not in the update request");
+        
+        // Verify the French translation is preserved by not being deleted
+        verify(coinI18nRepository, never()).delete(any(CoinI18n.class));
+        verify(coinI18nRepository, never()).deleteById(any(Long.class));
     }
 
     @Test
