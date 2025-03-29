@@ -1,6 +1,8 @@
 package io.jistud.coindesk.controller;
 
+import io.jistud.coindesk.dto.CoinResponse;
 import io.jistud.coindesk.entity.Coin;
+import io.jistud.coindesk.entity.CoinI18n;
 import io.jistud.coindesk.service.CoinService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -10,9 +12,12 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.hamcrest.Matchers.*;
@@ -147,6 +152,99 @@ public class CoinControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    @DisplayName("Should get a single coin by ID")
+    void shouldGetSingleCoinById() throws Exception {
+        // Arrange
+        Long coinId = 1L;
+        String coinName = "Bitcoin";
+        
+        Coin coin = createCoin(coinId, coinName);
+        LocalDateTime now = LocalDateTime.now();
+        coin.setCreatedAt(now);
+        coin.setUpdatedAt(now);
+        
+        CoinResponse expectedResponse = new CoinResponse();
+        expectedResponse.setId(coinId);
+        expectedResponse.setName(coinName);
+        expectedResponse.setCreatedAt(now);
+        expectedResponse.setUpdatedAt(now);
+        
+        when(coinService.findById(coinId)).thenReturn(Optional.of(coin));
+
+        // Act & Assert
+        mockMvc.perform(get("/api/v1/coins/{id}", coinId)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(1)))
+                .andExpect(jsonPath("$.name", is("Bitcoin")))
+                .andExpect(jsonPath("$.createdAt").exists())
+                .andExpect(jsonPath("$.updatedAt").exists())
+                .andExpect(jsonPath("$.i18nNames").doesNotExist());
+    }
+    
+    @Test
+    @DisplayName("Should get a coin with i18n names by ID")
+    void shouldGetCoinWithI18nNamesById() throws Exception {
+        // Arrange
+        Long coinId = 1L;
+        String coinName = "Bitcoin";
+        
+        Coin coin = createCoin(coinId, coinName);
+        LocalDateTime now = LocalDateTime.now();
+        coin.setCreatedAt(now);
+        coin.setUpdatedAt(now);
+        
+        // Add i18n names to the coin
+        CoinI18n i18nEn = new CoinI18n(coin, "en", "Bitcoin");
+        CoinI18n i18nEs = new CoinI18n(coin, "es", "Bitcóin");
+        CoinI18n i18nJa = new CoinI18n(coin, "ja", "ビットコイン");
+        
+        coin.addI18nName(i18nEn);
+        coin.addI18nName(i18nEs);
+        coin.addI18nName(i18nJa);
+        
+        CoinResponse expectedResponse = new CoinResponse();
+        expectedResponse.setId(coinId);
+        expectedResponse.setName(coinName);
+        expectedResponse.setCreatedAt(now);
+        expectedResponse.setUpdatedAt(now);
+        
+        Map<String, String> i18nNames = new HashMap<>();
+        i18nNames.put("en", "Bitcoin");
+        i18nNames.put("es", "Bitcóin");
+        i18nNames.put("ja", "ビットコイン");
+        expectedResponse.setI18nNames(i18nNames);
+        
+        when(coinService.findById(coinId)).thenReturn(Optional.of(coin));
+
+        // Act & Assert
+        mockMvc.perform(get("/api/v1/coins/{id}", coinId)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(1)))
+                .andExpect(jsonPath("$.name", is("Bitcoin")))
+                .andExpect(jsonPath("$.createdAt").exists())
+                .andExpect(jsonPath("$.updatedAt").exists())
+                .andExpect(jsonPath("$.i18nNames", notNullValue()))
+                .andExpect(jsonPath("$.i18nNames.en", is("Bitcoin")))
+                .andExpect(jsonPath("$.i18nNames.es", is("Bitcóin")))
+                .andExpect(jsonPath("$.i18nNames.ja", is("ビットコイン")));
+    }
+    
+    @Test
+    @DisplayName("Should return 404 when coin ID not found in getById")
+    void shouldReturn404WhenCoinIdNotFoundInGetById() throws Exception {
+        // Arrange
+        Long nonExistentId = 999L;
+        when(coinService.findById(nonExistentId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        mockMvc.perform(get("/api/v1/coins/{id}", nonExistentId)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
+    
     // Helper method to create coin objects for testing
     private Coin createCoin(Long id, String name) {
         Coin coin = new Coin(name);
