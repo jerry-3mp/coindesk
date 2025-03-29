@@ -49,16 +49,16 @@ public class CoinServiceImpl implements CoinService {
 
     @Override
     public Optional<Coin> findById(Long id) {
-        throw new UnsupportedOperationException("Method not yet implemented");
+        return coinRepository.findById(id);
     }
 
     @Override
     public Optional<Coin> findByName(String name) {
-        throw new UnsupportedOperationException("Method not yet implemented");
+        return coinRepository.findByName(name);
     }
 
     @Override
     public List<Coin> findAll() {
-        throw new UnsupportedOperationException("Method not yet implemented");
+        return coinRepository.findAll();
     }
 }
