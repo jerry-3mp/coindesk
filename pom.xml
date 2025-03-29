@@ -45,6 +45,13 @@
             <optional>true</optional>
         </dependency>
         
+        <!-- OpenAPI/Swagger Dependencies -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-ui</artifactId>
+            <version>1.6.9</version>
+        </dependency>
+        
         <!-- Database Dependencies -->
         <dependency>
             <groupId>org.flywaydb</groupId>
