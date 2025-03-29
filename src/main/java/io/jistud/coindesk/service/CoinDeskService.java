@@ -18,7 +18,8 @@ public interface CoinDeskService {
   /**
    * Gets a transformed response that combines CoinDesk API data with localized coin information
    *
-   * @return Transformed CoinDesk response
+   * @param langCode Optional language code (e.g., "zh-TW", "en") for localized names
+   * @return Transformed CoinDesk response with localized names when language specified
    */
-  CoinDeskTransformedResponse getTransformedCoinDeskData();
+  CoinDeskTransformedResponse getTransformedCoinDeskData(String langCode);
 }

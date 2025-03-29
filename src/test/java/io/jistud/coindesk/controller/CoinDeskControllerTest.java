@@ -89,5 +89,7 @@ public class CoinDeskControllerTest {
     response.setBpi(bpi);
 
     return response;
-  }
+    }
+    
+
 }

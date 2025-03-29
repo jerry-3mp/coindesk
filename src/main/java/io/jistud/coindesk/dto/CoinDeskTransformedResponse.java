@@ -20,7 +20,7 @@ public class CoinDeskTransformedResponse {
     return localizedName;
   }
 
-  public void setLocalizedName(String name) {
+  public void setLocalizedName(String localizedName) {
     this.localizedName = localizedName;
   }
 
