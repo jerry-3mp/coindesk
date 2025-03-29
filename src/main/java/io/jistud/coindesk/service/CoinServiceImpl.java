@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -65,6 +66,46 @@ public class CoinServiceImpl implements CoinService {
     @Override
     @Transactional
     public Coin updateCoin(Long id, String name, Map<String, String> i18nNames) {
-        throw new UnsupportedOperationException("Method not yet implemented");
+        // Find the coin by ID
+        Coin coin = coinRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Coin with ID " + id + " not found"));
+        
+        // Update the coin name
+        coin.setName(name);
+        coin = coinRepository.save(coin);
+        
+        // Update i18n names if provided
+        if (i18nNames != null && !i18nNames.isEmpty()) {
+            // Get existing i18n entries for this coin
+            List<CoinI18n> existingI18ns = coinI18nRepository.findByCoinId(id);
+            
+            // Create a map of existing entries by language code for quick lookup
+            Map<String, CoinI18n> existingI18nMap = new HashMap<>();
+            for (CoinI18n i18n : existingI18ns) {
+                existingI18nMap.put(i18n.getLangCode(), i18n);
+            }
+            
+            // Update or create i18n entries
+            for (Map.Entry<String, String> entry : i18nNames.entrySet()) {
+                String langCode = entry.getKey();
+                String i18nName = entry.getValue();
+                
+                if (existingI18nMap.containsKey(langCode)) {
+                    // Update existing entry
+                    CoinI18n existingI18n = existingI18nMap.get(langCode);
+                    existingI18n.setName(i18nName);
+                    coinI18nRepository.save(existingI18n);
+                } else {
+                    // Create new entry
+                    CoinI18n newI18n = new CoinI18n(coin, langCode, i18nName);
+                    coinI18nRepository.save(newI18n);
+                }
+            }
+            
+            // Note: We don't delete entries that weren't in the i18nNames map,
+            // implementing the merge approach as specified in the method contract
+        }
+        
+        return coin;
     }
 }

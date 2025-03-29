@@ -41,7 +41,8 @@ public interface CoinService {
     List<Coin> findAll();
     
     /**
-     * Updates an existing coin by its ID with optional internationalized names
+     * Updates an existing coin by its ID with optional internationalized names.
+     * Existing i18n entries not included in the update request will be preserved (merge approach).
      * 
      * @param id The ID of the coin to update
      * @param name The updated name of the coin
